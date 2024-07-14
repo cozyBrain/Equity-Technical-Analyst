@@ -10,10 +10,9 @@ class TechnicalIndicatorCalculator(BaseTool):
   description: str = """
   This tool is designed to compute various technical indicators for stock market data. 
   It processes input argument received directly from the stock_price tool, which includes date, open, high, low, close, volume, dividends, and stock splits. 
-  Don't put EOF inside string starting at row 0!
   Action Input must be like this -> Action Input: {\"argument\": stock_price_data}
   And the stock_price_data format should be csv.
-  You have to provide sufficient stock_price_data to get meaningful indicators. the data point count must be at least 30.
+  You have to provide sufficient stock_price_data to get meaningful indicators. the data point count must be at least 14.
   """
   def _run(self, argument: str) -> str:
     data = argument

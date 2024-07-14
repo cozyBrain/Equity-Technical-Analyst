@@ -8,21 +8,25 @@ from langchain_community.llms import Ollama
 import pandas as pd
 from tools.calculator_tools import TechnicalIndicatorCalculator
 
+
+# You don't need bottom line if you run on windows.
 os.environ["DOCKER_HOST"] = f"unix:///run/user/{os.getuid()}/docker.sock"
-# print all rows
+
+# Print all rows
 pd.set_option('display.max_rows', None)
-# print all columns
+# Print all columns
 #pd.set_option('display.max_columns', None)
 
-os.environ["ANTHROPIC_API_KEY"] = ''
+# You can set API key here
+#os.environ["ANTHROPIC_API_KEY"] = ''
+#os.environ["SERPER_API_KEY"] = ""
+
 
 ollama = Ollama(
     model = "orca-mini:7b",
     base_url = "http://localhost:11434")
-
+# You can replace custom_llm to ollama
 custom_llm = ChatAnthropic(temperature=0, model_name="claude-3-5-sonnet-20240620")
-
-os.environ["SERPER_API_KEY"] = ""
 
 
 #Tools
@@ -53,13 +57,9 @@ def stock_price(ticker, start_date, end_date, interval):
     When interval is 1 week, you can only get 1 year of price data at once to prevent overload.
     if you want to get latest data, the end_date must be 2 day later from current time. current time is 2024-7-14.
     You must Set Interval to 1 day when you get recent data that is less than a month old from stock price.
-    """#1m, 2m, 5m, 15m, 30m, 60m, 90m, 1h, 1d, 5d, 1wk, 1mo, 3mo
+    """
     ticker = yf.Ticker(ticker)
     return ticker.history(start=start_date, end=end_date, interval=interval)
-    #return ticker.history(period="max", interval="1wk")
-    #yf.download("AAPL", start="2022-01-01", end="2022-12-31")
-    #d = ticker.history(period="max", interval="3mo")
-    #d = ticker.history(period="1y", interval='1wk')
 @tool("Income Statement")
 def income_stmt(ticker):
     """
@@ -85,21 +85,6 @@ def inside_transactions(ticker):
     ticker = yf.Ticker(ticker)
     return ticker.insider_transactions
 
-#python_programmer = Agent(
-#    role='Python Programmer',
-#    goal='build a financial analysis program in python code. execute the code using your tool.',
-#    backstory="""
-#    You can calculate technical analysis using python code. You can find many useful technical indicies from stock price history.
-#    You are good at correcting the format and splitting the code into smaller chunks to avoid any issues.
-#    """,
-#    memory=True,
-#    verbose=True,
-#    allow_delegation=False,
-#    tools=[code_interpreter_tool],
-#    llm=custom_llm,
-#    max_iter = 60,
-#    rpm = 1,
-#)
 
 technical_analyst = Agent(
     role='Financial Analyst',
@@ -114,6 +99,9 @@ technical_analyst = Agent(
         When Collecting data less than a year old data, the interval must be 1 week.
         When Collecting recent data that is less than a month You MUST Set Interval to 1 day.
     Using TechnicalIndicatorCalculator you will get some useful indicators.
+    When Using TechnicalIndicatorCalculator:
+        just provide 20 data points. but you have to provide at least 15 data points.
+        don't forget to provide most recent data at least once.
     """,#You are used to work with the python programmer who help you find accurate technical values.
     memory=True,
     verbose=True,
@@ -174,7 +162,6 @@ technical_analysis_task = Task(
 crew = Crew(
     agents=[
         technical_analyst,
-        #python_programmer,
     ],
     tasks=[
         technical_analysis_task,
